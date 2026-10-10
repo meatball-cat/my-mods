@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Weekly my-mods update check (SOURCE). install_schedule.sh copies this into
+  ~/Library/LaunchAgents/; edit it here and re-run that script.
+  Mondays 03:40: if the Mac is asleep then, launchd runs it on the next wake.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.meatball-cat.my-mods.update-check</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/python3</string>
+        <string>-I</string>
+        <string>/Users/ninebot/.claude/my-mods/scripts/check_updates.py</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Weekday</key>
+        <integer>1</integer>
+        <key>Hour</key>
+        <integer>3</integer>
+        <key>Minute</key>
+        <integer>40</integer>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>StandardOutPath</key>
+    <string>/Users/ninebot/.local/share/my-mods-updater/launchd.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/ninebot/.local/share/my-mods-updater/launchd.log</string>
+</dict>
+</plist>
