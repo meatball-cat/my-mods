@@ -4,10 +4,18 @@ Local Claude Code plugin marketplace `my-mods` (6 mods). Claude Code loads each 
 
 ## Upstream sources
 
+Every mod in this folder must have a row here. When a mod is added, add its row in the same commit: the repository link (`https://github.com/<owner>/<repo>`), the mod's path inside that repo, and the upstream HEAD commit it was copied from. A mod with no upstream (written locally) gets `local` in the repo column and is skipped by update checks. A mod without a row is an error. Before checking for updates, compare the folders here with this table and report any mod that's missing.
+
 | Mod | Upstream repo | Path in upstream | Last synced commit |
 |---|---|---|---|
-| cache-keeper, collision-guard, goal-meter, recording-mode | nateherkai/claude-code-mods | `<mod>/` | 33a936f2ec6b (2026-10-02) |
-| savvy-flow, savvy-progress | johnnyvizz/claude-kit | `plugins/<mod>/` | 272a877f39b6 (2026-10-04) |
+| cache-keeper | https://github.com/nateherkai/claude-code-mods | `cache-keeper/` | 33a936f2ec6b (2026-10-02) |
+| collision-guard | https://github.com/nateherkai/claude-code-mods | `collision-guard/` | 33a936f2ec6b (2026-10-02) |
+| goal-meter | https://github.com/nateherkai/claude-code-mods | `goal-meter/` | 33a936f2ec6b (2026-10-02) |
+| recording-mode | https://github.com/nateherkai/claude-code-mods | `recording-mode/` | 33a936f2ec6b (2026-10-02) |
+| savvy-flow | https://github.com/johnnyvizz/claude-kit | `plugins/savvy-flow/` | 272a877f39b6 (2026-10-04) |
+| savvy-progress | https://github.com/johnnyvizz/claude-kit | `plugins/savvy-progress/` | 272a877f39b6 (2026-10-04) |
+
+For `gh api` calls, `<repo>` is the `owner/repo` part of the link.
 
 ## Checking for updates
 
