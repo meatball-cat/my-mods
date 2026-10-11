@@ -45,6 +45,13 @@
       "description": "Every open session on one live board above the prompt: progress bar, rough time left, state or what it needs from you; click a title to switch (/pulse)",
       "version": "0.1.5",
       "category": "mod"
+    },
+    {
+      "name": "you-should-know",
+      "source": "./you-should-know",
+      "description": "/you-should-know: a You should know summary on demand (what you might miss in this chat), shown above the prompt; companion to the built-in automatic check",
+      "version": "0.1.3",
+      "category": "mod"
     }
   ]
 }
