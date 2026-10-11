@@ -17,7 +17,7 @@ import os
 import subprocess
 import sys
 
-from check_updates import ROOT, TRACKED, mod_folders
+from check_updates import BUILTIN, ROOT, TRACKED, mod_folders
 
 SHARED = ("privacy.mjs", "fmt.mjs", "pricing.mjs")
 
@@ -31,24 +31,34 @@ def read_json(*path):
         return json.load(f)
 
 
-def upstream_table():
-    """Rows of the "Upstream sources" table in CLAUDE.md: mod -> repo, path, synced."""
-    rows, in_section = {}, False
+def table_rows(section):
+    """Data rows of the table under "## <section>" in CLAUDE.md, as lists of cells."""
+    rows, in_section = [], False
     with open(os.path.join(ROOT, "CLAUDE.md")) as f:
         for line in f:
             if line.startswith("## "):
-                in_section = line.strip() == "## Upstream sources"
+                in_section = line.strip() == f"## {section}"
             if not in_section or not line.startswith("|"):
                 continue
             cells = [c.strip() for c in line.strip().strip("|").split("|")]
-            if len(cells) != 4 or cells[0] == "Mod" or set(cells[0]) <= set("-: "):
+            if cells[0] == "Mod" or set(cells[0]) <= set("-: "):
                 continue
-            mod, repo, path, synced = cells
-            rows[mod] = {
-                "repo": repo.removeprefix("https://github.com/").rstrip("/"),
-                "path": path.strip("`").rstrip("/"),
-                "synced": synced.split()[0] if synced else "",
-            }
+            rows.append(cells)
+    return rows
+
+
+def upstream_table():
+    """Rows of the "Upstream sources" table in CLAUDE.md: mod -> repo, path, synced."""
+    rows = {}
+    for cells in table_rows("Upstream sources"):
+        if len(cells) != 4:
+            continue
+        mod, repo, path, synced = cells
+        rows[mod] = {
+            "repo": repo.removeprefix("https://github.com/").rstrip("/"),
+            "path": path.strip("`").rstrip("/"),
+            "synced": synced.split()[0] if synced else "",
+        }
     return rows
 
 
@@ -75,6 +85,19 @@ def check_listed(mods, problems):
     for where, names in (("marketplace.json", entries), ("CLAUDE.md", table), ("TRACKED", TRACKED)):
         for name in sorted(set(names) - set(mods)):
             problems.append(f"{name}: listed in {where} but has no mod folder")
+
+
+def check_builtin(mods, problems):
+    table = {cells[0]: cells[1].strip("`") for cells in table_rows("Built-in mods") if len(cells) == 3}
+    for mod in sorted(set(table) | set(BUILTIN)):
+        if mod in mods:
+            problems.append(f"{mod}: listed as built in but has a mod folder")
+        if mod not in table:
+            problems.append(f"{mod}: in BUILTIN but no row in the CLAUDE.md Built-in mods table")
+        elif mod not in BUILTIN:
+            problems.append(f"{mod}: in the CLAUDE.md Built-in mods table but missing from BUILTIN")
+        elif table[mod] != BUILTIN[mod]:
+            problems.append(f"{mod}: plugin id is {table[mod]!r} in CLAUDE.md but {BUILTIN[mod]!r} in BUILTIN")
 
 
 def check_shared(mods, problems):
@@ -126,6 +149,7 @@ def main():
 
     mods, problems = mod_folders(), []
     check_listed(mods, problems)
+    check_builtin(mods, problems)
     check_shared(mods, problems)
     check_user_data(problems)
     if args.base:

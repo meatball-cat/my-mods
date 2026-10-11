@@ -5,3 +5,4 @@
 - 2026-10-11 session-pulse 0.1.5: on desktop the dot and title are one plain text line like the status line above, so they line up with it exactly; switching to a session moved to a ↗ button before the ×.
 - 2026-10-11 cache-keeper 1.0.1: on desktop the band's first line puts an en space after its dot (● cache warm …) so the words line up with Session Pulse's titles below; the terminal is unchanged.
 - 2026-10-11 cache-keeper 1.0.2: the band's first line goes back to one plain space after its dot (dropping 1.0.1's en space, which pushed the words about 7 px right of Session Pulse's titles), so the words line up on desktop.
+- 2026-10-11 you-should-know (built in, `cc-plugin-you-should-know@builtin`): turned on in user scope and tracked under "Built-in mods" in CLAUDE.md and `BUILTIN` in `scripts/check_updates.py`; the weekly check flags it if it gets turned off, and `check_repo.py` keeps the table and `BUILTIN` in step.
