@@ -716,6 +716,8 @@ export function register(on) {
     const ttl = ttlMin()
     const big = S.ctx >= settings.bigTokens
     const parts = []
+    // One plain space after the dot, as Session Pulse draws its rows below, so
+    // the words line up with its titles on every surface.
     if (st.kind === 'kept') parts.push(Text({ color: 'cyan', children: [`◆ kept warm · ${S.pings} ping${S.pings === 1 ? '' : 's'} ${money(S.pingUsd)} · until ${clock(S.keepWarmUntil)}`] }))
     else if (st.kind === 'warm') parts.push(Text({ color: 'green', children: [`● cache warm ${minutes(st.left)}`] }))
     else if (st.kind === 'cooling') parts.push(Text({ color: 'yellow', bold: true, children: [`◐ cache cools in ${minutes(st.left)}`] }))
