@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Runs every CI check (scripts/ci.sh) before a push and blocks the push if one fails.
+# Claude sessions turn it on through .claude/settings.json; in a plain clone run
+#   git config core.hooksPath scripts/hooks
+# once. Skip it for one push with: git push --no-verify
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+if ! command -v claude >/dev/null 2>&1; then
+  echo "pre-push: warning: claude is not on PATH, skipping scripts/ci.sh (GitHub CI still runs it)" >&2
+  exit 0
+fi
+
+if ! bash scripts/ci.sh origin/main; then
+  echo "push blocked by scripts/ci.sh; fix it, or use git push --no-verify to skip" >&2
+  exit 1
+fi
