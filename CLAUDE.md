@@ -1,6 +1,6 @@
 # my-mods
 
-Local Claude Code plugin marketplace `my-mods` (7 mods). Claude Code loads each mod from `~/.claude/my-mods/<mod>`. Git remote: github.com/meatball-cat/my-mods (private). To change a mod, follow `CUSTOMIZE.md`.
+Local Claude Code plugin marketplace `my-mods` (7 mods, plus 1 built-in mod tracked below). Claude Code loads each mod from `~/.claude/my-mods/<mod>`. Git remote: github.com/meatball-cat/my-mods (private). To change a mod, follow `CUSTOMIZE.md`.
 
 ## Upstream sources
 
@@ -17,6 +17,14 @@ Every mod in this folder must have a row here. When a mod is added, add its row 
 | session-pulse | local | `session-pulse/` | local |
 
 For `gh api` calls, `<repo>` is the `owner/repo` part of the link.
+
+## Built-in mods
+
+Mods that ship inside Claude Code. They have no folder here and no `marketplace.json` entry, so the rules above don't apply; nothing is synced or copied. Each one has a row here and a matching entry in `BUILTIN` in `scripts/check_updates.py`, which reports a problem when the mod is no longer turned on in `~/.claude/settings.json` (`enabledPlugins`). Built-ins always land in user scope: `--scope local` is ignored. To add one: `claude plugin enable <plugin id>`, then add the row and the `BUILTIN` entry in the same commit. To remove one: `claude plugin disable <plugin id>` and delete both.
+
+| Mod | Plugin id | Docs |
+|---|---|---|
+| you-should-know | `cc-plugin-you-should-know@builtin` | https://code.claude.com/docs/en/plugins/mods/overview |
 
 ## Checking for updates
 

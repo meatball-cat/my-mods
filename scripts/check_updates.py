@@ -28,6 +28,21 @@ TRACKED = {
     "session-pulse":   {"repo": "local",                       "path": "session-pulse",           "synced": "local"},
 }
 
+# Mods built into Claude Code (no folder here): mod -> plugin id. Each must stay
+# turned on in ~/.claude/settings.json. Keep in step with "Built-in mods" in CLAUDE.md.
+BUILTIN = {
+    "you-should-know": "cc-plugin-you-should-know@builtin",
+}
+SETTINGS = os.path.expanduser("~/.claude/settings.json")
+
+
+def enabled_plugins():
+    try:
+        with open(SETTINGS) as f:
+            return json.load(f).get("enabledPlugins", {})
+    except (OSError, ValueError):
+        return {}
+
 
 class FetchError(Exception):
     pass
@@ -82,6 +97,12 @@ def main():
     for d in TRACKED:
         if not os.path.isdir(os.path.join(ROOT, d)):
             problems.append(f"{d}: tracked but folder is missing")
+    enabled = enabled_plugins()
+    for mod, plugin_id in BUILTIN.items():
+        if enabled.get(plugin_id) is True:
+            lines.append(f"  ok      {mod}: built in, enabled")
+        else:
+            problems.append(f"{mod}: built-in mod is not enabled; run `claude plugin enable {plugin_id}`")
 
     repo_state = {}
     for repo in sorted({t["repo"] for t in TRACKED.values() if t["repo"] != "local"}):
