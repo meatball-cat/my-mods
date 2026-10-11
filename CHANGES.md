@@ -4,3 +4,4 @@
 - 2026-10-11 session-pulse 0.1.4: on desktop the title starts closer to its dot (no extra space), lining up with the status line's text above.
 - 2026-10-11 session-pulse 0.1.5: on desktop the dot and title are one plain text line like the status line above, so they line up with it exactly; switching to a session moved to a ↗ button before the ×.
 - 2026-10-11 cache-keeper 1.0.1: on desktop the band's first line puts an en space after its dot (● cache warm …) so the words line up with Session Pulse's titles below; the terminal is unchanged.
+- 2026-10-11 cache-keeper 1.0.2: the band's first line goes back to one plain space after its dot (dropping 1.0.1's en space, which pushed the words about 7 px right of Session Pulse's titles), so the words line up on desktop.
