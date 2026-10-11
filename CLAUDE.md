@@ -39,6 +39,10 @@ Quick check: `python3 scripts/check_updates.py`. It prints one line per mod, fla
 6. Update "Last synced commit" in the table above **and** the mod's `synced` value in `TRACKED` in `scripts/check_updates.py`. Commit with a message naming the mods and upstream SHA, then `git push`.
 7. Tell the user to open a new chat to load the new version.
 
+## CI
+
+`.github/workflows/ci.yml` runs `scripts/ci.sh` on every pull request and every push to `main`. It runs `claude plugin validate --strict` on the marketplace and each mod, `claude plugin test` on each mod that has `*.test.ts(x)` files, and `scripts/check_repo.py`, which checks the rules below: every mod is listed in all three places and they agree, the shared helper copies are identical, no user data is committed, and on a pull request every changed mod has a higher version than on the base branch. Before pushing, run `bash scripts/ci.sh origin/main` and fix whatever it reports. CI pins Claude Code in `CLAUDE_CODE_VERSION` in the workflow; bump it after updating Claude Code locally.
+
 ## Rules
 
 - **Adding a new mod:** in the same commit, add it to (1) `.claude-plugin/marketplace.json`, (2) the Upstream sources table above, and (3) the `TRACKED` dict in `scripts/check_updates.py`, using the same repo (`owner/repo`, or `local`), path and synced commit as in the table. Then run `python3 scripts/check_updates.py` and confirm the new mod shows `ok` with no `PROBLEM` lines. Removing a mod means removing it from all three.
