@@ -234,7 +234,7 @@ describe('names', () => {
     const w = world(on)
     await start($, w)
     const ui = await $.ui.mount({ ...BAND, surface: 'desktop' })
-    expect(await ui.find({ type: 'Text', text: /^Write newsletter/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /^ ?Write newsletter/ })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: /write newsletter/ })).toBeUndefined()
     await ui.unmount()
   })

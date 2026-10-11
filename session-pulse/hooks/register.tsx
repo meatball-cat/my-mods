@@ -910,7 +910,7 @@ function svgRow($: EngineInterface, ui: Kit, Svg: SvgElement, item: Item, at: nu
   // The state column, its longest word whole on one line.
   const PANE = Math.max(4, Math.ceil(need.state * 0.95) + 1)
   const TAIL = TIME
-  const BUTTONS = 3 // ×: its label plus the button's padding
+  const BUTTONS = 6 // ↗ and ×: their labels plus the buttons' padding
   const GAPS = 7
   const FIXED = PCT + TAIL + PANE + BUTTONS + GAPS + 2
   const maxTitle = Math.max(10, Math.min(Math.floor(span * 0.5), span - FIXED - 10))
@@ -940,16 +940,16 @@ function svgRow($: EngineInterface, ui: Kit, Svg: SvgElement, item: Item, at: nu
   })
   return (
     <Box key={`row-${r.id}`} flexDirection="row" alignItems="center" width="100%" gap={1}>
-      {/* The dot is plain text at the band's left edge; the title is the
-          button that switches to the session (this one's says so). No wrap prop
-          (the desktop draws a wrapped text larger): the title is cut instead. */}
+      {/* The dot and the title are one plain line of text, drawn as the
+          status line above draws "● cache warm", so both line up with it
+          exactly (a button's own padding would push the title right). The ↗
+          before the × switches to the session. No wrap prop (the desktop draws
+          a wrapped text larger): the title is cut instead. */}
       <Box width={titleCells} flexShrink={0} flexDirection="row" alignItems="center">
-        {/* No space after the dot: the title button's own left padding is the
-            gap, so the title starts where the status line's text does. */}
-        <Text color={view.color}>{iconOf(r.state)}</Text>
-        <Button key={`go-${r.id}`} plain dimColor {...keys} onPress={press => void switchTo($, r, press.surface)}>
-          <Text dimColor>{cells(name) <= titleChars ? name : clip(name, Math.max(8, titleChars))}</Text>
-        </Button>
+        <Text>
+          <Text color={view.color}>{iconOf(r.state)}</Text>
+          <Text dimColor>{` ${cells(name) <= titleChars ? name : clip(name, Math.max(8, titleChars))}`}</Text>
+        </Text>
       </Box>
       {/* The bar starts right after the title column, so it always sits
           between the title and its percent; spare room goes before the ×. */}
@@ -964,6 +964,7 @@ function svgRow($: EngineInterface, ui: Kit, Svg: SvgElement, item: Item, at: nu
         {r.state === 'waiting' ? <Text color={COLOR.waiting}>{view.state}</Text> : <Text dimColor>{view.state}</Text>}
       </Box>
       <Box flexGrow={1} />
+      <Button key={`go-${r.id}`} label="↗" plain dimColor {...keys} onPress={press => void switchTo($, r, press.surface)} />
       <Button key={`x-${r.id}`} label="×" plain dimColor onPress={() => void hideRow($, r)} />
     </Box>
   )
