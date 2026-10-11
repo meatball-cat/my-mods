@@ -26,12 +26,13 @@ TRACKED = {
     "savvy-flow":      {"repo": "johnnyvizz/claude-kit",       "path": "plugins/savvy-flow",      "synced": "272a877f39b6"},
     "savvy-progress":  {"repo": "johnnyvizz/claude-kit",       "path": "plugins/savvy-progress",  "synced": "272a877f39b6"},
     "session-pulse":   {"repo": "local",                       "path": "session-pulse",           "synced": "local"},
+    "you-should-know": {"repo": "local",                       "path": "you-should-know",         "synced": "local"},
 }
 
 # Mods built into Claude Code (no folder here): mod -> plugin id. Each must stay
 # turned on in ~/.claude/settings.json. Keep in step with "Built-in mods" in CLAUDE.md.
 BUILTIN = {
-    "you-should-know": "cc-plugin-you-should-know@builtin",
+    "cc-plugin-you-should-know": "cc-plugin-you-should-know@builtin",
 }
 SETTINGS = os.path.expanduser("~/.claude/settings.json")
 

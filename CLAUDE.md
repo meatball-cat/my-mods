@@ -1,6 +1,6 @@
 # my-mods
 
-Local Claude Code plugin marketplace `my-mods` (7 mods, plus 1 built-in mod tracked below). Claude Code loads each mod from `~/.claude/my-mods/<mod>`. Git remote: github.com/meatball-cat/my-mods (private). To change a mod, follow `CUSTOMIZE.md`.
+Local Claude Code plugin marketplace `my-mods` (8 mods, plus 1 built-in mod tracked below). Claude Code loads each mod from `~/.claude/my-mods/<mod>`. Git remote: github.com/meatball-cat/my-mods (private). To change a mod, follow `CUSTOMIZE.md`.
 
 ## Upstream sources
 
@@ -15,6 +15,7 @@ Every mod in this folder must have a row here. When a mod is added, add its row 
 | savvy-flow | https://github.com/johnnyvizz/claude-kit | `plugins/savvy-flow/` | 272a877f39b6 (2026-10-04) |
 | savvy-progress | https://github.com/johnnyvizz/claude-kit | `plugins/savvy-progress/` | 272a877f39b6 (2026-10-04) |
 | session-pulse | local | `session-pulse/` | local |
+| you-should-know | local | `you-should-know/` | local |
 
 For `gh api` calls, `<repo>` is the `owner/repo` part of the link.
 
@@ -24,7 +25,7 @@ Mods that ship inside Claude Code. They have no folder here and no `marketplace.
 
 | Mod | Plugin id | Docs |
 |---|---|---|
-| you-should-know | `cc-plugin-you-should-know@builtin` | https://code.claude.com/docs/en/plugins/mods/overview |
+| cc-plugin-you-should-know | `cc-plugin-you-should-know@builtin` | https://code.claude.com/docs/en/plugins/mods/overview |
 
 ## Checking for updates
 
