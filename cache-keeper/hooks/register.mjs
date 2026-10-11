@@ -716,10 +716,13 @@ export function register(on) {
     const ttl = ttlMin()
     const big = S.ctx >= settings.bigTokens
     const parts = []
-    if (st.kind === 'kept') parts.push(Text({ color: 'cyan', children: [`◆ kept warm · ${S.pings} ping${S.pings === 1 ? '' : 's'} ${money(S.pingUsd)} · until ${clock(S.keepWarmUntil)}`] }))
-    else if (st.kind === 'warm') parts.push(Text({ color: 'green', children: [`● cache warm ${minutes(st.left)}`] }))
-    else if (st.kind === 'cooling') parts.push(Text({ color: 'yellow', bold: true, children: [`◐ cache cools in ${minutes(st.left)}`] }))
-    else if (st.kind === 'cold') parts.push(Text(big ? { color: 'red', bold: true, children: [`○ cache cold ${minutes(-st.left)}`] } : { dimColor: true, children: [`○ cache cold ${minutes(-st.left)}`] }))
+    // On the desktop an en space after the dot puts the words where Session
+    // Pulse's titles start in the rows below; the terminal keeps one cell.
+    const gap = e.surface === 'terminal' ? ' ' : ' \u2002'
+    if (st.kind === 'kept') parts.push(Text({ color: 'cyan', children: [`◆${gap}kept warm · ${S.pings} ping${S.pings === 1 ? '' : 's'} ${money(S.pingUsd)} · until ${clock(S.keepWarmUntil)}`] }))
+    else if (st.kind === 'warm') parts.push(Text({ color: 'green', children: [`●${gap}cache warm ${minutes(st.left)}`] }))
+    else if (st.kind === 'cooling') parts.push(Text({ color: 'yellow', bold: true, children: [`◐${gap}cache cools in ${minutes(st.left)}`] }))
+    else if (st.kind === 'cold') parts.push(Text(big ? { color: 'red', bold: true, children: [`○${gap}cache cold ${minutes(-st.left)}`] } : { dimColor: true, children: [`○${gap}cache cold ${minutes(-st.left)}`] }))
     parts.push(Text({ dimColor: true, children: [` │ ctx ${tokens(S.ctx)}`] }))
     if (st.kind === 'cold' && big) parts.push(Text({ color: 'red', children: [` │ next send rewrites it ≈ ${money(rewriteCost(S.ctx, S.model, ttl))}`] }))
     else parts.push(Text({ dimColor: true, children: [` │ rewrite ≈ ${money(rewriteCost(S.ctx, S.model, ttl))}`] }))
