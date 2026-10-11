@@ -1,6 +1,6 @@
 {
   "name": "session-pulse",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "Every open Claude Code session on one live board: a progress bar per session, a rough time left, click a row to switch to that session, x to hide it (/pulse)",
   "author": {
     "name": "meatball-cat"

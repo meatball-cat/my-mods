@@ -72,6 +72,7 @@ const BEAT_MS = 15 * SEC // a live session rewrites its file at least this often
 const STALE_MS = 75 * SEC // a file older than this belongs to a session that stopped answering
 const FORGET_MS = 12 * HOUR // files older than this are removed
 const RECENT_MS = 60 * MIN // a finished session stays on the band this long
+const MISSED_TURN_GRACE_MS = 15 * SEC // the band may draw before the engine marks a new turn running
 const BAND_ROWS = 6
 // The status dot's column: a row's title and its detail line both start after it.
 const ICON_CELLS = 2
@@ -219,12 +220,10 @@ function selfRow(): Row | null {
   return me === null ? null : { ...me, isSelf: true, isHidden: isHiddenBeat(me, hidden.get(me.id) ?? 0), isStale: false }
 }
 
-// Session names never start with a capital letter on the board.
-const lowerFirst = (s: string): string => s.charAt(0).toLocaleLowerCase() + s.slice(1)
-
 function labelOf(row: Row, index: number, isMasked: boolean): string {
   if (isMasked) return `session ${index + 1}`
-  if (row.title) return lowerFirst(row.title)
+  // The session's name exactly as Claude Code shows it.
+  if (row.title) return row.title
   return row.project ? `untitled · ${row.project}` : 'untitled session'
 }
 
@@ -286,7 +285,9 @@ async function tick($: EngineInterface): Promise<void> {
     if (isDirty || at - lastWrite >= BEAT_MS) await writeSelf($)
     if (ticks % 2 === 0) await scan($, at)
     if (ticks % 10 === 1) await readSettings($)
-    if (ticks % 120 === 0) await refreshTitle($)
+    // A rename in the app shows within seconds.
+    if (ticks % 5 === 0 && titleFrom !== 'prompt') await refreshTitle($)
+    else if (ticks % 120 === 0) await refreshTitle($)
     const list = await read($, rowsAtom)
     const isLive = list.some(r => isLiveState(r.state) && !r.isStale)
     if (isLive || ticks % 30 === 0) await update($, nowAtom, () => at)
@@ -355,7 +356,7 @@ async function refreshTitle($: EngineInterface): Promise<void> {
     if (desktopRecord) {
       try {
         const raw = JSON.parse(await $.fs.read(desktopRecord)) as { title?: unknown }
-        const title = typeof raw.title === 'string' ? clip(raw.title.replace(/\s+/g, ' ').trim(), 80) : ''
+        const title = typeof raw.title === 'string' ? raw.title.replace(/\s+/g, ' ').trim() : ''
         if (title) {
           if (title !== me.title) {
             me.title = title
@@ -619,6 +620,19 @@ async function finishTurn($: EngineInterface, reason: string, durationMs: number
   }
   await writeSelf($)
   if (titleFrom !== 'desktop' || me.turns <= 3) await refreshTitle($)
+}
+
+// A turn whose end this module never heard (a reload or an unload between its
+// start and its end) would stay "working" for good. The engine's own band says
+// whether a turn runs: past a short grace, a live row with no turn running is
+// over. Its length is unknown, so it teaches the pace nothing.
+async function settleMissedTurn($: EngineInterface, isWorking: boolean): Promise<void> {
+  if (isWorking || me === null || me.startedAt === 0 || !isLiveState(me.state)) return
+  const at = await $.clock.now()
+  if (at - me.startedAt < MISSED_TURN_GRACE_MS) return
+  me = { ...me, state: 'done', endedAt: at, turns: me.turns + 1, stopPct: 100, waitingSince: 0, activity: '', need: '' }
+  waitKind = ''
+  await writeSelf($)
 }
 
 // ---------------------------------------------------------------------------
@@ -935,7 +949,8 @@ function svgRow($: EngineInterface, ui: Kit, Svg: SvgElement, item: Item, at: nu
           <Text dimColor>{cells(name) <= titleChars ? name : clip(name, Math.max(8, titleChars))}</Text>
         </Button>
       </Box>
-      <Box flexGrow={1} />
+      {/* The bar starts right after the title column, so it always sits
+          between the title and its percent; spare room goes before the ×. */}
       <Svg source={source} alt={`${name}: ${[view.pctText, view.tail].filter(Boolean).join(', ')}`} width={width} height={SVG_HEIGHT} />
       {/* Time, then state (or what to do while it waits on you), each column
           as wide as its longest shown, so the × buttons line up row to row. */}
@@ -946,6 +961,7 @@ function svgRow($: EngineInterface, ui: Kit, Svg: SvgElement, item: Item, at: nu
       <Box width={PANE} flexShrink={0}>
         {r.state === 'waiting' ? <Text color={COLOR.waiting}>{view.state}</Text> : <Text dimColor>{view.state}</Text>}
       </Box>
+      <Box flexGrow={1} />
       <Button key={`x-${r.id}`} label="×" plain dimColor onPress={() => void hideRow($, r)} />
     </Box>
   )
@@ -1270,6 +1286,7 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const below = await next(e)
+    if (e.props.isWorking === false) void settleMissedTurn($, false).catch(() => undefined)
     if (e.props.hasSurvey || !isTracked) return below
     const prefs = await read($, prefsAtom)
     if (prefs.mode === 'off') return below

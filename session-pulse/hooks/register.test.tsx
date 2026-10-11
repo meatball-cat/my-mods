@@ -131,7 +131,7 @@ describe('the band', () => {
     for (const surface of SURFACES) {
       const ui = await $.ui.mount({ ...BAND, surface })
       expect(await ui.find({ key: `go-${OTHER}` })).toBeDefined()
-      expect(await ui.find({ type: 'Text', text: /write newsletter/ })).toBeDefined()
+      expect(await ui.find({ type: 'Text', text: /Write newsletter/ })).toBeDefined()
       if (surface === 'desktop') {
         expect(await ui.find({ type: 'Svg' })).toBeDefined()
         // The percent rolls inside the picture; the time left stays text.
@@ -230,12 +230,12 @@ describe('the demo', () => {
 })
 
 describe('names', () => {
-  test('a session name never starts with a capital letter', async ($, on) => {
+  test('a session name is shown exactly as Claude Code names it', async ($, on) => {
     const w = world(on)
     await start($, w)
     const ui = await $.ui.mount({ ...BAND, surface: 'desktop' })
-    expect(await ui.find({ type: 'Text', text: /^write newsletter/ })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: /Write newsletter/ })).toBeUndefined()
+    expect(await ui.find({ type: 'Text', text: /^Write newsletter/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /write newsletter/ })).toBeUndefined()
     await ui.unmount()
   })
 })
@@ -251,7 +251,7 @@ describe('titles', () => {
     for (const surface of SURFACES) {
       const ui = await $.ui.mount({ ...BAND, surface, props: { ...BAND.props, bodyColumns: 160 } })
       expect((await ui.findAll({ type: 'Text', text: /…/ })).length).toBe(0)
-      expect(await ui.find({ text: /organize every research note from the spring interviews/ })).toBeDefined()
+      expect(await ui.find({ text: /Organize every research note from the spring interviews/ })).toBeDefined()
       await ui.unmount()
     }
   })
@@ -333,5 +333,29 @@ describe('this session', () => {
 
     await $.session.end({ reason: 'other', sessionId: ME, resume: { id: ME } })
     expect(mine().ended).toBe(true)
+  })
+
+  test('a turn whose end was never heard settles once no turn is running', async ($, on) => {
+    const w = world(on)
+    await start($, w)
+    const mine = (): Record<string, unknown> => JSON.parse(w.files.get(`${DIR}/s-${ME}.json`)?.text ?? '{}') as Record<string, unknown>
+    await $.turn.start({ text: 'Build the board', turnId: 't1' })
+    // Just started: the band may draw before the engine marks the turn running.
+    let ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+    await w.clock.settle()
+    await ui.unmount()
+    expect(mine().state).toBe('working')
+    // Still running: nothing changes however long it takes.
+    await w.clock.advance(60_000)
+    ui = await $.ui.mount({ ...BAND, props: { ...BAND.props, isWorking: true }, surface: 'terminal' })
+    await w.clock.settle()
+    await ui.unmount()
+    expect(mine().state).toBe('working')
+    // No turn running and no turn.complete heard: the row is done, not stuck at 95%.
+    ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+    await w.clock.settle()
+    await ui.unmount()
+    expect(mine().state).toBe('done')
+    expect(mine().turns).toBe(1)
   })
 })
