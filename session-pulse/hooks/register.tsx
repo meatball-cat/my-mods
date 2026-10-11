@@ -944,7 +944,9 @@ function svgRow($: EngineInterface, ui: Kit, Svg: SvgElement, item: Item, at: nu
           button that switches to the session (this one's says so). No wrap prop
           (the desktop draws a wrapped text larger): the title is cut instead. */}
       <Box width={titleCells} flexShrink={0} flexDirection="row" alignItems="center">
-        <Text color={view.color}>{`${iconOf(r.state)} `}</Text>
+        {/* No space after the dot: the title button's own left padding is the
+            gap, so the title starts where the status line's text does. */}
+        <Text color={view.color}>{iconOf(r.state)}</Text>
         <Button key={`go-${r.id}`} plain dimColor {...keys} onPress={press => void switchTo($, r, press.surface)}>
           <Text dimColor>{cells(name) <= titleChars ? name : clip(name, Math.max(8, titleChars))}</Text>
         </Button>

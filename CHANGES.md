@@ -1,3 +1,4 @@
 - 2026-10-11 session-pulse 0.1.1: a row stuck in "working" (a turn end the mod never heard) now settles to done once the engine's band reports no turn running.
 - 2026-10-11 session-pulse 0.1.2: session titles are shown exactly as Claude Code names them (no lowercased first letter, no 80-character cut) and a rename in the app shows within about 5 seconds.
 - 2026-10-11 session-pulse 0.1.3: on desktop the bar starts right after the title column, so it always sits between the title and its percent; spare row width goes before the ×.
+- 2026-10-11 session-pulse 0.1.4: on desktop the title starts closer to its dot (no extra space), lining up with the status line's text above.
