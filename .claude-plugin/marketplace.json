@@ -52,6 +52,13 @@
       "description": "/you-should-know: a You should know summary on demand (what you might miss in this chat), shown above the prompt; companion to the built-in automatic check",
       "version": "0.1.3",
       "category": "mod"
+    },
+    {
+      "name": "jev-router",
+      "source": "./jev-router",
+      "description": "Jev picks the skill for each prompt (a hint Claude may ignore) and the model for each subagent; on/off buttons above the prompt (/jev, /jev-model)",
+      "version": "0.1.0",
+      "category": "mod"
     }
   ]
 }

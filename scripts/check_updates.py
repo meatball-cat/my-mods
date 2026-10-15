@@ -22,6 +22,7 @@ TRACKED = {
     "cache-keeper":    {"repo": "nateherkai/claude-code-mods", "path": "cache-keeper",            "synced": "33a936f2ec6b"},
     "collision-guard": {"repo": "nateherkai/claude-code-mods", "path": "collision-guard",         "synced": "33a936f2ec6b"},
     "goal-meter":      {"repo": "nateherkai/claude-code-mods", "path": "goal-meter",              "synced": "33a936f2ec6b"},
+    "jev-router":      {"repo": "local",                       "path": "jev-router",              "synced": "local"},
     "recording-mode":  {"repo": "nateherkai/claude-code-mods", "path": "recording-mode",          "synced": "33a936f2ec6b"},
     "savvy-flow":      {"repo": "johnnyvizz/claude-kit",       "path": "plugins/savvy-flow",      "synced": "272a877f39b6"},
     "savvy-progress":  {"repo": "johnnyvizz/claude-kit",       "path": "plugins/savvy-progress",  "synced": "272a877f39b6"},
