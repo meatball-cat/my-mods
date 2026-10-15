@@ -13,6 +13,7 @@ printed, logged or written anywhere. On any error: exit 1, print nothing.
 import glob
 import json
 import os
+import re
 import ssl
 import subprocess
 import sys
@@ -26,6 +27,9 @@ KEYCHAIN_SERVICE = "ai.typesafe.api"
 LOG = os.path.expanduser("~/.claude/jev_log.jsonl")
 MAX_STATE = 8000
 MAX_DESCRIPTION = 400
+# A skill name is passed to Claude inside a hint, and a project's skills may be untrusted:
+# only plain names (letters, digits, . _ : -) are offered, so a name can't carry instructions.
+SKILL_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$")
 
 COMPLEXITY_LEVELS = [
     "Mechanical lookup: find files, grep for a symbol, list or read something and report it back.",
@@ -121,7 +125,7 @@ def skills():
             except (OSError, UnicodeDecodeError):
                 continue
             name = (meta.get("name") or os.path.basename(os.path.dirname(path))).strip()
-            if not name or name == "none" or name in found:
+            if not SKILL_NAME.match(name) or name == "none" or name in found:
                 continue
             found[name] = (meta.get("description") or name)[:MAX_DESCRIPTION]
     return found

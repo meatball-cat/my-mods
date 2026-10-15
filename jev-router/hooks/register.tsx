@@ -24,6 +24,9 @@ const lastPickAtom = atom({ plugin: 'jev-router', key: 'lastPick' } as const, nu
 
 export const MODEL_FOR: Record<number, 'haiku' | 'sonnet' | 'opus'> = { 1: 'haiku', 2: 'sonnet', 3: 'sonnet', 4: 'opus' }
 export const MIN_CONFIDENCE = 0.6
+// Only a plain skill name reaches the hint: a project's skills may be untrusted, and a name
+// that could carry instructions is dropped (the router filters the same way).
+const SKILL_NAME = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/
 // The script's own HTTP timeout is 5 s; this covers Python's start and the keychain read.
 const ROUTER_TIMEOUT_MS = 8000
 // After a failure (no key, offline, Jev down) skip Jev for a while, so prompts don't wait on it.
@@ -58,7 +61,7 @@ export function asComplexity(v: unknown): Complexity | null {
 
 /** The hint the model reads beside the prompt, or null when Jev has nothing confident to say. */
 export function hintFor(pick: Pick | null): string | null {
-  if (!pick || pick.choice === 'none' || pick.confidence < MIN_CONFIDENCE) return null
+  if (!pick || pick.choice === 'none' || pick.confidence < MIN_CONFIDENCE || !SKILL_NAME.test(pick.choice)) return null
   return `Jev picked the ${pick.choice} skill (confidence ${pick.confidence.toFixed(2)}).`
 }
 
