@@ -1,6 +1,6 @@
 # my-mods
 
-Local Claude Code plugin marketplace `my-mods` (8 mods, plus 1 built-in mod tracked below). Claude Code loads each mod from `~/.claude/my-mods/<mod>`. Git remote: github.com/meatball-cat/my-mods (private). To change a mod, follow `CUSTOMIZE.md`.
+Local Claude Code plugin marketplace `my-mods` (9 mods, plus 1 built-in mod tracked below). Claude Code loads each mod from `~/.claude/my-mods/<mod>`. Git remote: github.com/meatball-cat/my-mods (private). To change a mod, follow `CUSTOMIZE.md`.
 
 ## Upstream sources
 
@@ -11,6 +11,7 @@ Every mod in this folder must have a row here. When a mod is added, add its row 
 | cache-keeper | https://github.com/nateherkai/claude-code-mods | `cache-keeper/` | 33a936f2ec6b (2026-10-02) |
 | collision-guard | https://github.com/nateherkai/claude-code-mods | `collision-guard/` | 33a936f2ec6b (2026-10-02) |
 | goal-meter | https://github.com/nateherkai/claude-code-mods | `goal-meter/` | 33a936f2ec6b (2026-10-02) |
+| jev-router | local | `jev-router/` | local |
 | recording-mode | https://github.com/nateherkai/claude-code-mods | `recording-mode/` | 33a936f2ec6b (2026-10-02) |
 | savvy-flow | https://github.com/johnnyvizz/claude-kit | `plugins/savvy-flow/` | 272a877f39b6 (2026-10-04) |
 | savvy-progress | https://github.com/johnnyvizz/claude-kit | `plugins/savvy-progress/` | 272a877f39b6 (2026-10-04) |
