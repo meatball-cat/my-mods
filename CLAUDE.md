@@ -13,8 +13,8 @@ Every mod in this folder must have a row here. When a mod is added, add its row 
 | goal-meter | https://github.com/nateherkai/claude-code-mods | `goal-meter/` | 33a936f2ec6b (2026-10-02) |
 | jev-router | local | `jev-router/` | local |
 | recording-mode | https://github.com/nateherkai/claude-code-mods | `recording-mode/` | 33a936f2ec6b (2026-10-02) |
-| savvy-flow | https://github.com/johnnyvizz/claude-kit | `plugins/savvy-flow/` | 272a877f39b6 (2026-10-04) |
-| savvy-progress | https://github.com/johnnyvizz/claude-kit | `plugins/savvy-progress/` | 272a877f39b6 (2026-10-04) |
+| savvy-flow | https://github.com/johnnyvizz/claude-kit | `plugins/savvy-flow/` | c871c153ead5 (2026-10-12) |
+| savvy-progress | https://github.com/johnnyvizz/claude-kit | `plugins/savvy-progress/` | c871c153ead5 (2026-10-12) |
 | session-pulse | local | `session-pulse/` | local |
 | you-should-know | local | `you-should-know/` | local |
 

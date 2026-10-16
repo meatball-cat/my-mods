@@ -24,8 +24,8 @@ TRACKED = {
     "goal-meter":      {"repo": "nateherkai/claude-code-mods", "path": "goal-meter",              "synced": "33a936f2ec6b"},
     "jev-router":      {"repo": "local",                       "path": "jev-router",              "synced": "local"},
     "recording-mode":  {"repo": "nateherkai/claude-code-mods", "path": "recording-mode",          "synced": "33a936f2ec6b"},
-    "savvy-flow":      {"repo": "johnnyvizz/claude-kit",       "path": "plugins/savvy-flow",      "synced": "272a877f39b6"},
-    "savvy-progress":  {"repo": "johnnyvizz/claude-kit",       "path": "plugins/savvy-progress",  "synced": "272a877f39b6"},
+    "savvy-flow":      {"repo": "johnnyvizz/claude-kit",       "path": "plugins/savvy-flow",      "synced": "c871c153ead5"},
+    "savvy-progress":  {"repo": "johnnyvizz/claude-kit",       "path": "plugins/savvy-progress",  "synced": "c871c153ead5"},
     "session-pulse":   {"repo": "local",                       "path": "session-pulse",           "synced": "local"},
     "you-should-know": {"repo": "local",                       "path": "you-should-know",         "synced": "local"},
 }
