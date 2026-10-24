@@ -96,7 +96,8 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const theirs = await next(e)
-    if (e.props.hasSurvey) return theirs
+    // The desktop app shows no buttons; /jev and /jev-model still toggle there.
+    if (e.props.hasSurvey || e.surface === 'desktop') return theirs
     const enabled = await read($, enabledAtom)
     const modelRouting = await read($, modelRoutingAtom)
     const { Box, Button } = $.ui.resolve(e)
