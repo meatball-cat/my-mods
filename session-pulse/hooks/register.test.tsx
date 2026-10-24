@@ -351,11 +351,48 @@ describe('this session', () => {
     await w.clock.settle()
     await ui.unmount()
     expect(mine().state).toBe('working')
-    // No turn running and no turn.complete heard: the row is done, not stuck at 95%.
+    // No turn running and no turn.complete heard: still working until the quiet spell is long.
     ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
     await w.clock.settle()
     await ui.unmount()
+    expect(mine().state).toBe('working')
+    await w.clock.advance(4 * 60_000)
+    ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+    await w.clock.settle()
+    await ui.unmount()
+    // ...then the row is done, not stuck at 95%.
     expect(mine().state).toBe('done')
     expect(mine().turns).toBe(1)
+  })
+
+  test('a long wait the engine calls idle does not end a turn, and activity revives a settled one', async ($, on) => {
+    const w = world(on)
+    await start($, w)
+    const mine = (): Record<string, unknown> => JSON.parse(w.files.get(`${DIR}/s-${ME}.json`)?.text ?? '{}') as Record<string, unknown>
+    const draw = async (): Promise<void> => {
+      const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+      await w.clock.settle()
+      await ui.unmount()
+    }
+    await $.turn.start({ text: 'Build the board', turnId: 't1' })
+    // A tool call every minute keeps the quiet spell from ever filling up.
+    for (let i = 0; i < 6; i++) {
+      await w.clock.advance(60_000)
+      await draw()
+      await $.tool.call({ tool: 'Read', input: { file_path: '/x' } })
+      await w.clock.advance(2000)
+      await w.clock.settle()
+      expect(mine().state).toBe('working')
+    }
+    // Quiet for good: settled. Then the turn shows activity again: working again.
+    await draw()
+    await w.clock.advance(4 * 60_000)
+    await draw()
+    expect(mine().state).toBe('done')
+    await $.tool.call({ tool: 'Read', input: { file_path: '/y' } })
+    await w.clock.advance(20_000)
+    await w.clock.settle()
+    expect(mine().state).toBe('working')
+    expect(mine().turns).toBe(0)
   })
 })

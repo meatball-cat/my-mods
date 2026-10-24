@@ -73,6 +73,7 @@ const STALE_MS = 75 * SEC // a file older than this belongs to a session that st
 const FORGET_MS = 12 * HOUR // files older than this are removed
 const RECENT_MS = 60 * MIN // a finished session stays on the band this long
 const MISSED_TURN_GRACE_MS = 15 * SEC // the band may draw before the engine marks a new turn running
+const HEARD_TURN_GRACE_MS = 3 * MIN // a turn this module heard start must look idle this long before it is settled
 const BAND_ROWS = 6
 // The status dot's column: a row's title and its detail line both start after it.
 const ICON_CELLS = 2
@@ -100,6 +101,11 @@ let desktopRecord = ''
 let myTurns: number[] = []
 let pace: number[] = []
 let waitKind: '' | 'ask' | 'permission' = ''
+// The turn this module itself heard start (a reload loses it), when the engine's
+// band first said no turn was running, and whether a row was settled by that.
+let heardStartAt = 0
+let notWorkingSince = 0
+let isSettledEarly = false
 let commandName = 'pulse'
 const tasks = new Map<string, TaskEntry>()
 // The app's own digit outlines (scripts/digits-from-app-font.py), when extracted.
@@ -508,6 +514,9 @@ async function startTurn($: EngineInterface, text: string): Promise<void> {
     agents: 0,
   }
   waitKind = ''
+  heardStartAt = at
+  notWorkingSince = 0
+  isSettledEarly = false
   if (titleFrom === 'folder') {
     const title = titleFromPrompt(text)
     if (title) {
@@ -540,7 +549,18 @@ async function endWait($: EngineInterface): Promise<void> {
   await writeSelf($)
 }
 
+// A row settled while its turn was still running (the engine's band said idle
+// during a long wait) is live again the moment the turn shows activity.
+function reviveSettled(): void {
+  if (me === null || !isSettledEarly || me.state !== 'done') return
+  isSettledEarly = false
+  notWorkingSince = 0
+  me = { ...me, state: 'working', endedAt: 0, turns: Math.max(0, me.turns - 1), stopPct: 0 }
+}
+
 async function noteCall($: EngineInterface, tool: string, input: Record<string, unknown>, isMain: boolean, isAsk: boolean): Promise<void> {
+  reviveSettled()
+  notWorkingSince = 0
   if (me === null || !isLiveState(me.state)) return
   // A tool runs once its permission was given.
   if (waitKind === 'permission') await endWait($)
@@ -595,6 +615,7 @@ async function afterCall($: EngineInterface, tool: string, input: Record<string,
 }
 
 async function finishTurn($: EngineInterface, reason: string, durationMs: number): Promise<void> {
+  reviveSettled()
   if (me === null || me.startedAt === 0 || !isLiveState(me.state)) return
   const at = await $.clock.now()
   if (me.waitingSince) {
@@ -627,9 +648,24 @@ async function finishTurn($: EngineInterface, reason: string, durationMs: number
 // whether a turn runs: past a short grace, a live row with no turn running is
 // over. Its length is unknown, so it teaches the pace nothing.
 async function settleMissedTurn($: EngineInterface, isWorking: boolean): Promise<void> {
+  if (isWorking) notWorkingSince = 0
   if (isWorking || me === null || me.startedAt === 0 || !isLiveState(me.state)) return
   const at = await $.clock.now()
   if (at - me.startedAt < MISSED_TURN_GRACE_MS) return
+  // A turn this module saw start is still running while it waits on a long tool,
+  // a workflow or background agents, whatever the engine's band says: settle it
+  // only after a long quiet spell with nothing running.
+  const isHeard = me.startedAt === heardStartAt
+  if (isHeard) {
+    if (notWorkingSince === 0) notWorkingSince = at
+    if (at - notWorkingSince < HEARD_TURN_GRACE_MS) return
+    try {
+      if ((await $.agent.list()).some(a => a.status === 'running')) return
+    } catch {
+      // no agent list: go by the quiet spell alone
+    }
+  }
+  isSettledEarly = isHeard
   me = { ...me, state: 'done', endedAt: at, turns: me.turns + 1, stopPct: 100, waitingSince: 0, activity: '', need: '' }
   waitKind = ''
   await writeSelf($)
