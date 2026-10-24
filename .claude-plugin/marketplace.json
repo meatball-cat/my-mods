@@ -57,7 +57,7 @@
       "name": "jev-router",
       "source": "./jev-router",
       "description": "Jev picks the skill for each prompt (a hint Claude may ignore) and the model for each subagent; on/off buttons above the prompt (/jev, /jev-model)",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "category": "mod"
     }
   ]

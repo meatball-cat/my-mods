@@ -169,10 +169,19 @@ describe('toggles', () => {
     expect(w.logs).toEqual([])
   })
 
-  test('the buttons flip their labels on every surface', async ($, on) => {
+  test('the desktop app shows no buttons', async ($, on) => {
     world(on, '')
     await start($)
-    for (const surface of ['terminal', 'desktop'] as const) {
+    const ui = await $.ui.mount({ ...BAND, surface: 'desktop' })
+    expect(await ui.find({ key: 'jev' })).toBeFalsy()
+    expect(await ui.find({ key: 'jev-model' })).toBeFalsy()
+    await ui.unmount()
+  })
+
+  test('the buttons flip their labels in the terminal', async ($, on) => {
+    world(on, '')
+    await start($)
+    for (const surface of ['terminal'] as const) {
       const ui = await $.ui.mount({ ...BAND, surface })
       const before = (await ui.find({ key: 'jev' }))?.props.label
       await ui.press({ key: 'jev' })
