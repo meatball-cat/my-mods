@@ -43,7 +43,7 @@
       "name": "session-pulse",
       "source": "./session-pulse",
       "description": "Every open session on one live board above the prompt: progress bar, rough time left, state or what it needs from you; click a title to switch (/pulse)",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "category": "mod"
     },
     {

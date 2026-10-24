@@ -949,7 +949,9 @@ function svgRow($: EngineInterface, ui: Kit, Svg: SvgElement, item: Item, at: nu
   const BUTTONS = 6 // ↗ and ×: their labels plus the buttons' padding
   const GAPS = 7
   const FIXED = PCT + TAIL + PANE + BUTTONS + GAPS + 2
-  const maxTitle = Math.max(10, Math.min(Math.floor(span * 0.5), span - FIXED - 10))
+  // The pane has no band to share: a title may take up to two thirds of its row.
+  const share = site.endsWith(':pane') ? 0.65 : 0.5
+  const maxTitle = Math.max(10, Math.min(Math.floor(span * share), span - FIXED - 10))
   const titleCells = clamp(Math.ceil(need.title * 0.9) + 3, 10, maxTitle)
   const titleChars = Math.floor((titleCells - 3) / 0.9)
   const barCells = Math.max(8, span - titleCells - FIXED)
@@ -1391,10 +1393,11 @@ export const register: Register = on => {
       { title: 'Running', items: items.filter(x => !x.row.isHidden && !x.row.isStale && isLiveState(x.row.state)) },
       { title: 'Finished', items: items.filter(x => !x.row.isHidden && !x.row.isStale && (x.row.state === 'done' || x.row.state === 'stopped' || x.row.state === 'error')) },
       { title: 'Idle', items: items.filter(x => !x.row.isHidden && !x.row.isStale && x.row.state === 'idle') },
-      { title: 'Offline', items: items.filter(x => !x.row.isHidden && x.row.isStale) },
-      { title: 'Hidden (× pressed)', items: items.filter(x => x.row.isHidden) },
+      // A closed session needs no hiding: it is offline whatever was pressed.
+      { title: 'Offline', items: items.filter(x => x.row.isStale) },
+      { title: 'Hidden', items: items.filter(x => x.row.isHidden && !x.row.isStale) },
     ].filter(g => g.items.length > 0)
-    const hiddenCount = items.filter(x => x.row.isHidden).length
+    const hiddenCount = items.filter(x => x.row.isHidden && !x.row.isStale).length
     const live = items.filter(x => !x.row.isStale)
     const counts = [
       [live.filter(x => x.row.state === 'working').length, 'working'],
@@ -1404,24 +1407,26 @@ export const register: Register = on => {
       [items.length - live.length, 'offline'],
     ] as const
     const summary = counts.filter(([count]) => count > 0).map(([count, word]) => `${count} ${count === 1 && word === 'need you' ? 'needs you' : word}`).join(' · ')
-    const modeName = { full: 'one row per session', compact: 'one summary line', off: 'hidden' }[prefs.mode]
     const cols = e.props.bodyColumns
     const need = columnNeeds(items, e.surface, at)
     return (
       <Box flexDirection="column">
+        {/* The count and the summary share one line that never wraps; the
+            controls sit under them, short enough for a narrow pane. */}
+        <Box flexDirection="row" width="100%" gap={1}>
+          <Text bold wrap="truncate-end">{`${items.length} session${items.length === 1 ? '' : 's'}`}</Text>
+          {summary !== '' && <Text color="subtle" wrap="truncate-end">{`· ${summary}`}</Text>}
+        </Box>
         <Box flexDirection="row" width="100%" gap={2}>
-          <Text bold>{`${items.length} session${items.length === 1 ? '' : 's'}`}</Text>
-          <Text color="subtle">{summary}</Text>
-          <Box flexGrow={1} />
           <Button key="pulse-mode" plain dimColor onPress={() => void savePrefs($, p => ({ ...p, mode: p.mode === 'full' ? 'compact' : p.mode === 'compact' ? 'off' : 'full' }))}>
-            {`Band above prompt: ${modeName}`}
+            {`Band: ${prefs.mode}`}
           </Button>
           <Button key="pulse-alerts" plain dimColor onPress={() => void savePrefs($, p => ({ ...p, alerts: !p.alerts }))}>
             {`Alerts: ${prefs.alerts ? 'on' : 'off'}`}
           </Button>
           {hiddenCount > 0 && (
             <Button key="pulse-unhide" plain dimColor onPress={() => void unhideAll($)}>
-              {`Show ${hiddenCount} hidden`}
+              {`Unhide ${hiddenCount}`}
             </Button>
           )}
         </Box>
@@ -1443,7 +1448,7 @@ export const register: Register = on => {
           </Box>
         ))}
         <Box marginTop={1}>
-          <Text color="subtle">{`Click a title to switch to that session · × hides a row until that session starts again · options: /${commandName || 'pulse'} help`}</Text>
+          <Text color="subtle" wrap="truncate-end">{`Click a title to switch · × hides · /${commandName || 'pulse'} help`}</Text>
         </Box>
       </Box>
     )
