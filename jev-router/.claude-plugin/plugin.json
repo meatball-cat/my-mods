@@ -1,6 +1,6 @@
 {
   "name": "jev-router",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Jev picks the skill for each prompt (a hint Claude may ignore) and the model for each subagent; on/off buttons above the prompt (/jev, /jev-model)",
   "author": {
     "name": "meatball-cat"

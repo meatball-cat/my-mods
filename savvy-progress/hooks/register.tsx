@@ -1248,8 +1248,14 @@ export const register: Register = (on, options) => {
     }
 
     const cols = e.props.bodyColumns
+    // The count and the percent keep the width of their widest form ("10/10",
+    // "100%"), so the buttons after them don't shift as the numbers grow.
+    const shown = label(f).padEnd(label(f.total && !f.isFinished ? { ...f, done: f.total } : f).length)
+    const pct = percent.padStart(4)
+    // Beside the title and the bar: the count, the percent, ▣, ×N, ✕ and six gaps of 2.
+    const rest = shown.length + pct.length + 1 + `×${crew}`.length + 1 + 12
     const titleW = Math.max(8, Math.min(30, f.title.length + 2, Math.floor(cols / 3)))
-    const width = Math.max(6, Math.min(40, cols - titleW - 32))
+    const width = Math.max(3, Math.min(40, cols - titleW - rest))
     return (
       <Box flexDirection="column">
         <Box flexDirection="row" gap={2}>
@@ -1258,8 +1264,8 @@ export const register: Register = (on, options) => {
             <Text wrap="truncate-end">{f.title}</Text>
           </Box>
           <Text color={f.isFinished ? DONE : ACCENT}>{barText(f, width)}</Text>
-          <Text bold>{label(f)}</Text>
-          <Text dimColor>{percent}</Text>
+          <Text bold>{shown}</Text>
+          <Text dimColor>{pct}</Text>
           <Text color={CLAY}>▣</Text>
           {crewButton}
           {dismiss}

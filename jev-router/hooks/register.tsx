@@ -105,9 +105,14 @@ export const register: Register = on => {
     const toggleModels = async () => $.store.set('modelRouting', await update($, modelRoutingAtom, v => !v))
     return (
       <Box flexDirection="column">
+        {/* Each button sits in a box as wide as its longer label, so "off" doesn't push the next one over. */}
         <Box flexDirection="row" columnGap={2}>
-          <Button key="jev" plain label={enabled ? 'Jev ● on' : 'Jev ○ off'} onPress={toggleSkills} />
-          <Button key="jev-model" plain label={modelRouting ? 'Model ● on' : 'Model ○ off'} onPress={toggleModels} />
+          <Box width={9} flexShrink={0}>
+            <Button key="jev" plain label={enabled ? 'Jev ● on' : 'Jev ○ off'} onPress={toggleSkills} />
+          </Box>
+          <Box width={11} flexShrink={0}>
+            <Button key="jev-model" plain label={modelRouting ? 'Model ● on' : 'Model ○ off'} onPress={toggleModels} />
+          </Box>
         </Box>
         {theirs}
       </Box>

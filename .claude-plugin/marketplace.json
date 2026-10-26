@@ -36,14 +36,14 @@
       "name": "savvy-progress",
       "source": "./savvy-progress",
       "description": "Mod: progress bar above the prompt and a live agents panel; made for savvy-flow, shows any subagents.",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "category": "mod"
     },
     {
       "name": "session-pulse",
       "source": "./session-pulse",
       "description": "Every open session on one live board above the prompt: progress bar, rough time left, state or what it needs from you; click a title to switch (/pulse)",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "category": "mod"
     },
     {
@@ -57,7 +57,7 @@
       "name": "jev-router",
       "source": "./jev-router",
       "description": "Jev picks the skill for each prompt (a hint Claude may ignore) and the model for each subagent; on/off buttons above the prompt (/jev, /jev-model)",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "category": "mod"
     }
   ]
