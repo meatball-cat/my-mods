@@ -14,6 +14,7 @@ import {
   rollingNumber,
   cells,
   demoTiming,
+  durText,
   estimate,
   etaText,
   expectedMs,
@@ -222,5 +223,13 @@ describe('reading heartbeats', () => {
     expect(b?.state).toBe('idle')
     expect(b?.title).toBe('a b')
     expect(asBeat({ ...beat(), hostId: 'local_7962aaec-1c36' })?.hostId).toBe('local_7962aaec-1c36')
+  })
+})
+
+describe('durations', () => {
+  test('just under a minute reads as a minute, never "60s"', () => {
+    expect(durText(59 * SEC)).toBe('59s')
+    expect(durText(59.6 * SEC)).toBe('1m')
+    expect(durText(MIN)).toBe('1m')
   })
 })
