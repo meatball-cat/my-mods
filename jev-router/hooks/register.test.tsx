@@ -195,6 +195,17 @@ describe('toggles', () => {
     }
   })
 
+  test('each button sits in a box wide enough for both its labels', async ($, on) => {
+    world(on, '')
+    await start($)
+    const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+    const widths = (await ui.findAll({ type: 'Box' })).map(b => b.props.width).filter(w => typeof w === 'number')
+    expect(widths).toEqual([9, 11])
+    for (const label of ['Jev ● on', 'Jev ○ off']) expect(label.length).toBeLessThanOrEqual(9)
+    for (const label of ['Model ● on', 'Model ○ off']) expect(label.length).toBeLessThanOrEqual(11)
+    await ui.unmount()
+  })
+
   test('the saved state is loaded at start', async ($, on) => {
     const w = world(on, '{"choice": "docx", "confidence": 1.0}', 0, { enabled: false, modelRouting: true })
     await start($)

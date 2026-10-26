@@ -256,6 +256,8 @@ export function register(on) {
     }
     commandName = (await registerCommand($)) || commandName
     await restore($)
+    // a restored goal draws now, not at the first tick
+    if (G) $.ui.invalidate('ui.render')
     $.clock.every(15000, async () => {
       now = await $.clock.now()
       if (paneOpen) await loadOthers($)
@@ -421,7 +423,7 @@ export function register(on) {
     if (e.props && e.props.hasSurvey) return below
     if (!G || hidden || !(G.status === 'running' || isRecent(G))) return below
     const el = $.ui.resolve(e)
-    const width = Math.max(40, (e.props && e.props.bodyColumns) || 100)
+    const width = (e.props && e.props.bodyColumns) || 100
     const mine = drawBand($, el, width)
     return el.Box({ flexDirection: 'column', children: below ? [mine, below] : [mine] })
   })
@@ -437,7 +439,7 @@ export function register(on) {
   on('ui.render', { component: 'Pane' }, async ($, e, next) => {
     if (e.requestId !== PANE) return next(e)
     const el = $.ui.resolve(e)
-    const width = Math.max(50, (e.props && e.props.bodyColumns) || 100)
+    const width = (e.props && e.props.bodyColumns) || 100
     return drawPane(el, width)
   })
 }
@@ -510,14 +512,15 @@ function taskRow(el, t, width) {
   const body = t.status === 'active'
     ? Text({ bold: true, wrap: 'truncate-end', children: [`${t.size}  ${title}`] })
     : Text({ dimColor: t.status !== 'pending', wrap: 'truncate-end', children: [`${t.size}  ${title}`] })
-  const kids = [lead, body]
-  if (tail) kids.push(Text({ dimColor: true, children: ['  ' + clip(tail, Math.max(10, Math.floor(width / 3)))] }))
+  // the icon and the tail keep their room; only the title gives way
+  const kids = [Box({ flexShrink: 0, children: [lead] }), body]
+  if (tail) kids.push(Box({ flexShrink: 0, children: [Text({ dimColor: true, wrap: 'truncate-end', children: ['  ' + clip(tail, Math.max(6, Math.floor(width / 3)))] })] }))
   return Box({ flexDirection: 'row', children: kids })
 }
 
 function barRow(el, g, p, width) {
   const { Box, Text } = el
-  const w = Math.max(10, Math.min(width - 2, 120))
+  const w = Math.max(4, Math.min(width, 120))
   const n = Math.round(p.fraction * w)
   const color = g.status === 'met' ? 'green' : 'cyan'
   return Box({ flexDirection: 'row', children: [Text({ color, children: ['█'.repeat(n)] }), Text({ dimColor: true, children: ['░'.repeat(w - n)] })] })
@@ -576,7 +579,10 @@ async function openPane($) {
 function otherRow(el, g, width) {
   const { Box, Text } = el
   const p = progress(g)
-  const name = clip(mask(`${g.label || basename(g.cwd)}: ${g.title}`), Math.max(16, Math.floor(width * 0.4)))
+  // fixed columns, so every row's bar starts and ends at the same place
+  const nameW = Math.max(10, Math.min(40, Math.floor(width * 0.4)))
+  const tailW = 14 // "100% · ~12h30m"
+  const name = clip(mask(`${g.label || basename(g.cwd)}: ${g.title}`), nameW)
   let tail
   if (g.status === 'met') tail = 'done ✓'
   else if (g.status !== 'running') tail = 'stopped'
@@ -585,14 +591,14 @@ function otherRow(el, g, width) {
     const t = eta(g, now)
     tail = `${p.pct}% · ${t ? '~' + minutes(t.ms) : p.doneN + '/' + p.n}`
   }
-  const w = Math.max(8, Math.min(24, width - name.length - tail.length - 6))
+  const w = Math.max(4, Math.min(24, width - nameW - tailW - 4))
   return Box({
     flexDirection: 'row',
     columnGap: 2,
     children: [
-      Text({ wrap: 'truncate-end', children: [name] }),
-      Text({ color: g.status === 'met' ? 'green' : 'cyan', children: [bar(p.fraction, w)] }),
-      Text({ dimColor: true, children: [tail] }),
+      Box({ width: nameW, flexShrink: 0, children: [Text({ wrap: 'truncate-end', children: [name] })] }),
+      Box({ flexShrink: 0, children: [Text({ color: g.status === 'met' ? 'green' : 'cyan', children: [bar(p.fraction, w)] })] }),
+      Text({ dimColor: true, wrap: 'truncate-end', children: [tail] }),
     ],
   })
 }
