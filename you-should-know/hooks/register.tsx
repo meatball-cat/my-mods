@@ -155,7 +155,7 @@ function lineOf(point: Point): string {
 }
 
 export function summaryOf(note: Note): string {
-  const title = `You should know${note.focus === '' ? '' : ` · ${note.focus}`}`
+  const title = `You should know${note.focus === '' ? '' : ` · ${clip(note.focus, 40)}`}`
   if (note.points.length === 0) return `${title}: nothing worth flagging right now.`
   return [
     `${title} (${note.points.length})`,
@@ -176,7 +176,9 @@ async function check($: EngineInterface, focus: string): Promise<void> {
     }
     const note: Note = { points: pointsOf(reply.text), focus, at: await $.clock.now() }
     await update($, noteAtom, () => note)
-    $.ui.log(summaryOf(note))
+    // A transcript notice is one line: a newline inside one draws as a box
+    // character on the terminal, so each line of the summary is a notice of its own.
+    for (const line of summaryOf(note).split('\n')) $.ui.log(line)
   } catch {
     $.ui.toast("/you-should-know couldn't finish the check.")
   } finally {
@@ -248,6 +250,7 @@ export const register: Register = on => {
     const lead = NUM_CELLS + TAG_CELLS
     const points = note?.points ?? []
     const focus = note !== null && note.focus !== '' ? ` · ${note.focus}` : ''
+    const count = points.length === 0 ? 'all clear' : `${points.length} point${points.length === 1 ? '' : 's'}`
 
     const seconds = isChecking ? Math.max(0, Math.floor(((await $.clock.now()) - checkStartedAt) / 1000)) : 0
 
@@ -261,10 +264,12 @@ export const register: Register = on => {
       </Box>
     ) : (
       <Box flexDirection="column">
-        <Box>
-          <Text bold>You should know</Text>
-          <Text dimColor>
-            {focus} · {points.length === 0 ? 'all clear' : `${points.length} point${points.length === 1 ? '' : 's'}`}
+        <Box flexDirection="row">
+          <Box flexShrink={0}>
+            <Text bold>You should know</Text>
+          </Box>
+          <Text dimColor wrap="truncate-end">
+            {`${clip(focus, Math.max(4, columns - 30))} · ${count}`}
           </Text>
         </Box>
         {points.length === 0 && <Text dimColor>Nothing worth flagging right now.</Text>}

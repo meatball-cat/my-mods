@@ -6,15 +6,15 @@ A personal Claude Code plugin marketplace named `my-mods`: 9 mods kept in this f
 
 | Mod | Version | What it does | Source |
 |---|---|---|---|
-| cache-keeper | 1.0.2 | Keeps a big chat's prompt cache warm, warns before an expensive cold restart, shows every local chat on one board (`/board`), and hands a chat off to a fresh one (`/handoff`) | [nateherkai/claude-code-mods](https://github.com/nateherkai/claude-code-mods) |
-| collision-guard | 1.0.0 | Asks before Claude edits a file another open chat changed in the last 30 minutes: Proceed, Move to a worktree, or Cancel (`/guard`) | [nateherkai/claude-code-mods](https://github.com/nateherkai/claude-code-mods) |
+| cache-keeper | 1.0.3 | Keeps a big chat's prompt cache warm, warns before an expensive cold restart, shows every local chat on one board (`/board`), and hands a chat off to a fresh one (`/handoff`) | [nateherkai/claude-code-mods](https://github.com/nateherkai/claude-code-mods) |
+| collision-guard | 1.0.1 | Asks before Claude edits a file another open chat changed in the last 30 minutes: Proceed, Move to a worktree, or Cancel (`/guard`) | [nateherkai/claude-code-mods](https://github.com/nateherkai/claude-code-mods) |
 | goal-meter | 1.0.0 | A progress bar for `/goal` built from Claude's own task plan: tasks done, elapsed time, an ETA, and every chat's goal in `/goals` | [nateherkai/claude-code-mods](https://github.com/nateherkai/claude-code-mods) |
 | recording-mode | 1.0.0 | `/rec` before you record: masks keys, personal details and business figures on screen and keeps private files closed | [nateherkai/claude-code-mods](https://github.com/nateherkai/claude-code-mods) |
 | savvy-flow | 1.2.1 | Skill: the session model plans, owns design and reviews; five tiered worker subagents implement | [johnnyvizz/claude-kit](https://github.com/johnnyvizz/claude-kit) |
 | savvy-progress | 1.2.1 | Progress bar above the prompt for `/savvy-flow`, plus an agents panel (`/agents-info`) | [johnnyvizz/claude-kit](https://github.com/johnnyvizz/claude-kit) |
 | jev-router | 0.1.0 | Jev picks the skill for each prompt (a hint Claude may ignore) and the model for each subagent; on/off buttons above the prompt (`/jev`, `/jev-model`) | local |
 | session-pulse | 0.1.5 | Every open session on one live board above the prompt: progress bar, rough time left, state; click a title to switch (`/pulse`) | local |
-| you-should-know | 0.1.3 | `/you-should-know`: a "You should know" summary on demand, shown above the prompt | local |
+| you-should-know | 0.1.4 | `/you-should-know`: a "You should know" summary on demand, shown above the prompt | local |
 
 Built-in: `cc-plugin-you-should-know@builtin` ([docs](https://code.claude.com/docs/en/plugins/mods/overview)), turned on in `~/.claude/settings.json`. It has no folder here.
 
