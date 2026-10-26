@@ -629,6 +629,7 @@ function drawPane(el, width) {
   rows.push(Text({ bold: true, children: [`Other chats (${rest.length})`] }))
   if (!rest.length) rows.push(Text({ dimColor: true, children: ['No other chat has a goal in the last 12 hours.'] }))
   for (const g of rest.slice(0, 15)) rows.push(otherRow(el, g, width))
+  if (rest.length > 15) rows.push(Text({ dimColor: true, children: [`+${rest.length - 15} more not shown`] }))
   rows.push(Text({ children: [' '] }))
   rows.push(Text({ dimColor: true, children: [`/${commandName} hide|show (the band) · /${commandName} strict ${settings.strict ? 'off' : 'on'} · /${commandName} clear`] }))
   return Box({ flexDirection: 'column', children: rows })
