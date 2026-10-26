@@ -31,3 +31,13 @@ test('desktop: the row is still one Svg', async ($, on) => {
   await session($, on)
   expect(await band($, 'desktop')).toEqual({ svg: 1, title: 0, label: 0 })
 })
+
+test('terminal: the count and percent keep their widest width, so the buttons stay put', async ($, on) => {
+  await session($, on)
+  await $.tool.call({ tool: 'mcp__savvy-progress__progress', title: 'Ship it', total: 10, done: 9, phase: 'delegate' } as never)
+  const ui = await $.ui.mount({ plugin: 'savvy-progress', surface: 'terminal', ...BAND })
+  const label = await ui.findAll({ type: 'Text', text: /^Tasks 9\/10 $/ })
+  const pct = await ui.findAll({ type: 'Text', text: /^ 90%$/ })
+  await ui.unmount()
+  expect({ label: label.length, pct: pct.length }).toEqual({ label: 1, pct: 1 })
+})
