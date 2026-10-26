@@ -328,7 +328,8 @@ export function asBeat(raw: unknown): Beat | null {
 // Text and color
 
 export function durText(ms: number): string {
-  if (ms < MIN) return `${Math.max(1, Math.round(ms / SEC))}s`
+  // 59.6 s rounds to a minute, not to "60s".
+  if (ms < MIN - SEC / 2) return `${Math.max(1, Math.round(ms / SEC))}s`
   const m = Math.round(ms / MIN)
   if (m < 60) return `${m}m`
   const h = Math.floor(m / 60)
