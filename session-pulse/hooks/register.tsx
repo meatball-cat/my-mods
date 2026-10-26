@@ -900,10 +900,23 @@ function termRow($: EngineInterface, ui: Kit, item: Item, at: number, cols: numb
   // The title column fits the longest title shown; the bar gives up room first
   // (down to 10 cells) and a title is cut only past half the row.
   // The alert column fits the longest shown whole, on one line.
-  const tailW = clamp(need.tail, 6, 14)
-  const paneW = clamp(need.state, 4, 32) + 1
-  const titleW = clamp(need.title, 10, Math.max(10, Math.min(Math.floor(cols * 0.5), cols - 18 - tailW - paneW - 10)))
-  const barW = clamp(cols - titleW - 18 - tailW - paneW, 6, 32)
+  // Besides those four columns the row holds the dot, the percent, the × and
+  // the seven gaps between its eight pieces.
+  const room = cols - (ICON_CELLS - 1) - 4 - 1 - 7
+  let tailW = clamp(need.tail, 6, 16)
+  let stateW = clamp(need.state, 4, 32)
+  // In a narrow row the bar shrinks to 3 cells, then the state and the time
+  // are cut, before the row would wrap: a title keeps at least 10 cells.
+  let short = 13 - (room - tailW - stateW)
+  if (short > 0) {
+    const cut = Math.min(short, stateW - 4)
+    stateW -= cut
+    short -= cut
+  }
+  if (short > 0) tailW -= Math.min(short, tailW - 4)
+  const free = room - tailW - stateW
+  const titleW = clamp(need.title, Math.min(10, Math.max(6, free - 3)), Math.max(10, Math.min(Math.floor(cols * 0.5), free - 10)))
+  const barW = clamp(free - titleW, 3, 32)
   const { fill, rest } = barCells(view.pct, barW)
   const name = fit(r.isSelf ? `${item.label} (here)` : item.label, titleW)
   const keys = hotkey ? { hotkey } : {}
@@ -921,7 +934,7 @@ function termRow($: EngineInterface, ui: Kit, item: Item, at: number, cols: numb
       </Box>
       <Text bold>{view.pctText.padStart(4)}</Text>
       <Text color={view.tailColor}>{fit(view.tail, tailW)}</Text>
-      {r.state === 'waiting' ? <Text color={COLOR.waiting}>{fit(view.state, paneW - 1)}</Text> : <Text dimColor>{fit(view.state, paneW - 1)}</Text>}
+      {r.state === 'waiting' ? <Text color={COLOR.waiting}>{fit(view.state, stateW)}</Text> : <Text dimColor>{fit(view.state, stateW)}</Text>}
       <Box flexGrow={1} />
       <Button key={`x-${r.id}`} label="×" plain dimColor onPress={() => void hideRow($, r)} />
     </Box>
@@ -1027,6 +1040,13 @@ function columnNeeds(items: readonly Item[], surface: RenderSurface, at: number)
     }),
     { title: 0, tail: 0, state: 0 },
   )
+}
+
+// "+3 more sessions · /pulse", or just "+3 more" where the band is too narrow
+// for it beside the pane button.
+function moreText(more: number, cols: number): string {
+  const full = `+${more} more session${more === 1 ? '' : 's'} · /${commandName || 'pulse'}`
+  return full.length + 12 <= cols ? full : `+${more} more`
 }
 
 function compactBand($: EngineInterface, ui: Kit, surface: RenderSurface, items: readonly Item[], at: number): RenderElement {
@@ -1357,10 +1377,10 @@ export const register: Register = on => {
             {more > 0 &&
               (e.surface === 'terminal' ? (
                 <Button key="pulse-more" plain dimColor onPress={() => void openPane($)}>
-                  {`+${more} more session${more === 1 ? '' : 's'} · /${commandName || 'pulse'}`}
+                  {moreText(more, e.props.bodyColumns)}
                 </Button>
               ) : (
-                <Text color="subtle">{`+${more} more session${more === 1 ? '' : 's'} · /${commandName || 'pulse'}`}</Text>
+                <Text color="subtle">{moreText(more, e.props.bodyColumns)}</Text>
               ))}
             <Box flexGrow={1} />
             {/* Not plain: the app draws its own framed button around the word
@@ -1414,7 +1434,10 @@ export const register: Register = on => {
         {/* The count and the summary share one line that never wraps; the
             controls sit under them, short enough for a narrow pane. */}
         <Box flexDirection="row" width="100%" gap={1}>
-          <Text bold wrap="truncate-end">{`${items.length} session${items.length === 1 ? '' : 's'}`}</Text>
+          {/* The count stays whole; the summary is cut first. */}
+          <Box flexShrink={0}>
+            <Text bold>{`${items.length} session${items.length === 1 ? '' : 's'}`}</Text>
+          </Box>
           {summary !== '' && <Text color="subtle" wrap="truncate-end">{`· ${summary}`}</Text>}
         </Box>
         <Box flexDirection="row" width="100%" gap={2}>
