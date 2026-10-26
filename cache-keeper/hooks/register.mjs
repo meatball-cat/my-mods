@@ -715,35 +715,53 @@ export function register(on) {
     const st = cacheState(hb)
     const ttl = ttlMin()
     const big = S.ctx >= settings.bigTokens
-    const parts = []
+    // Each segment has a rank: the lowest ranks are dropped first when the row
+    // is too narrow, so the band stays one line instead of wrapping every
+    // segment inside its own column.
+    const segs = []
     // One plain space after the dot, as Session Pulse draws its rows below, so
     // the words line up with its titles on every surface.
-    if (st.kind === 'kept') parts.push(Text({ color: 'cyan', children: [`◆ kept warm · ${S.pings} ping${S.pings === 1 ? '' : 's'} ${money(S.pingUsd)} · until ${clock(S.keepWarmUntil)}`] }))
-    else if (st.kind === 'warm') parts.push(Text({ color: 'green', children: [`● cache warm ${minutes(st.left)}`] }))
-    else if (st.kind === 'cooling') parts.push(Text({ color: 'yellow', bold: true, children: [`◐ cache cools in ${minutes(st.left)}`] }))
-    else if (st.kind === 'cold') parts.push(Text(big ? { color: 'red', bold: true, children: [`○ cache cold ${minutes(-st.left)}`] } : { dimColor: true, children: [`○ cache cold ${minutes(-st.left)}`] }))
-    parts.push(Text({ dimColor: true, children: [` │ ctx ${tokens(S.ctx)}`] }))
-    if (st.kind === 'cold' && big) parts.push(Text({ color: 'red', children: [` │ next send rewrites it ≈ ${money(rewriteCost(S.ctx, S.model, ttl))}`] }))
-    else parts.push(Text({ dimColor: true, children: [` │ rewrite ≈ ${money(rewriteCost(S.ctx, S.model, ttl))}`] }))
-    if (S.rateLimits.length) parts.push(Text(limitTone(S.rateLimits, { children: [' │ ' + limitsText(S.rateLimits)] })))
-    parts.push(Text({ dimColor: true, children: [` │ session ${money(S.costUsd)}`] }))
-    if (S.coldRestarts.length) parts.push(Text({ dimColor: true, children: [` │ ${S.coldRestarts.length} cold restart${S.coldRestarts.length === 1 ? '' : 's'} ${money(S.coldRestarts.reduce((a, c) => a + c.usd, 0))}`] }))
-    const row = [Box({ flexDirection: 'row', children: parts })]
-    if (st.kind === 'cooling' && big) {
-      row.push(Button({ key: 'keepwarm', label: 'keep warm', hotkey: '1', plain: true, onPress: async () => { now = await $.clock.now(); startKeepWarm($, settings.keepWarmHours); await heartbeat($, true); $.ui.invalidate('ui.render') } }))
-    } else if (st.kind === 'kept') {
-      row.push(Button({ key: 'keepwarm', label: 'stop warm', hotkey: '1', plain: true, onPress: async () => { now = await $.clock.now(); stopKeepWarm($, 'turned off'); await heartbeat($, true); $.ui.invalidate('ui.render') } }))
-    }
-    const left = Box({ flexDirection: 'row', columnGap: 2, children: row })
+    if (st.kind === 'kept') segs.push({ rank: 9, text: `◆ kept warm · ${S.pings} ping${S.pings === 1 ? '' : 's'} ${money(S.pingUsd)} · until ${clock(S.keepWarmUntil)}`, props: { color: 'cyan' } })
+    else if (st.kind === 'warm') segs.push({ rank: 9, text: `● cache warm ${minutes(st.left)}`, props: { color: 'green' } })
+    else if (st.kind === 'cooling') segs.push({ rank: 9, text: `◐ cache cools in ${minutes(st.left)}`, props: { color: 'yellow', bold: true } })
+    else if (st.kind === 'cold') segs.push({ rank: 9, text: `○ cache cold ${minutes(-st.left)}`, props: big ? { color: 'red', bold: true } : { dimColor: true } })
+    segs.push({ rank: 5, text: ` │ ctx ${tokens(S.ctx)}`, props: { dimColor: true } })
+    if (st.kind === 'cold' && big) segs.push({ rank: 8, text: ` │ next send rewrites it ≈ ${money(rewriteCost(S.ctx, S.model, ttl))}`, props: { color: 'red' } })
+    else segs.push({ rank: 6, text: ` │ rewrite ≈ ${money(rewriteCost(S.ctx, S.model, ttl))}`, props: { dimColor: true } })
+    if (S.rateLimits.length) segs.push({ rank: 7, text: ' │ ' + limitsText(S.rateLimits), props: limitTone(S.rateLimits, {}) })
+    segs.push({ rank: 3, text: ` │ session ${money(S.costUsd)}`, props: { dimColor: true } })
+    if (S.coldRestarts.length) segs.push({ rank: 2, text: ` │ ${S.coldRestarts.length} cold restart${S.coldRestarts.length === 1 ? '' : 's'} ${money(S.coldRestarts.reduce((a, c) => a + c.usd, 0))}`, props: { dimColor: true } })
     // Right edge: one click runs /session-handoff (h while the band has the focus;
     // a letter never fires from the prompt box, unlike a digit). Once a handoff
     // is in, c clears this chat and sends it as the fresh chat's first prompt.
     const busy = handoffPending || H.armed
-    const handoff = Button({ key: 'handoff', label: handoffPending ? 'handoff queued' : H.armed ? 'handoff running' : 'handoff', hotkey: 'h', plain: true, dimColor: busy, onPress: () => runHandoff($) })
+    const handoffLabel = handoffPending ? 'handoff queued' : H.armed ? 'handoff running' : 'handoff'
+    const goLabel = H.continuing ? 'clearing' : 'clear and continue'
+    const warmLabel = st.kind === 'cooling' && big ? 'keep warm' : st.kind === 'kept' ? 'stop warm' : ''
+    // A plain Button draws as "<hotkey>: <label>"; 2 columns between each
+    let room = ((e.props && e.props.bodyColumns) || 100) - (handoffLabel.length + 3) - 2
+    if (H.text || H.continuing) room -= goLabel.length + 3 + 2
+    if (warmLabel) room -= warmLabel.length + 3 + 2
+    const kept = new Set()
+    for (const s of [...segs].sort((a, b) => b.rank - a.rank)) {
+      if (kept.size === 0 || s.text.length <= room) {
+        kept.add(s)
+        room -= s.text.length
+      }
+    }
+    const parts = segs.filter((s) => kept.has(s)).map((s) => Text({ ...s.props, wrap: 'truncate-end', children: [s.text] }))
+    const row = [Box({ flexDirection: 'row', flexShrink: 1, children: parts })]
+    if (st.kind === 'cooling' && big) {
+      row.push(Button({ key: 'keepwarm', label: warmLabel, hotkey: '1', plain: true, onPress: async () => { now = await $.clock.now(); startKeepWarm($, settings.keepWarmHours); await heartbeat($, true); $.ui.invalidate('ui.render') } }))
+    } else if (st.kind === 'kept') {
+      row.push(Button({ key: 'keepwarm', label: warmLabel, hotkey: '1', plain: true, onPress: async () => { now = await $.clock.now(); stopKeepWarm($, 'turned off'); await heartbeat($, true); $.ui.invalidate('ui.render') } }))
+    }
+    const left = Box({ flexDirection: 'row', flexShrink: 1, columnGap: 2, children: row })
+    const handoff = Button({ key: 'handoff', label: handoffLabel, hotkey: 'h', plain: true, dimColor: busy, onPress: () => runHandoff($) })
     let right = handoff
     if (H.text || H.continuing) {
-      const go = Button({ key: 'continue', label: H.continuing ? 'clearing' : 'clear and continue', hotkey: 'c', plain: true, onPress: () => clearAndContinue($) })
-      right = Box({ flexDirection: 'row', columnGap: 2, children: [go, handoff] })
+      const go = Button({ key: 'continue', label: goLabel, hotkey: 'c', plain: true, onPress: () => clearAndContinue($) })
+      right = Box({ flexDirection: 'row', flexShrink: 0, columnGap: 2, children: [go, handoff] })
     }
     const mine = Box({ flexDirection: 'row', justifyContent: 'space-between', width: '100%', columnGap: 2, children: [left, right] })
     return Box({ flexDirection: 'column', children: below ? [mine, below] : [mine] })
@@ -813,34 +831,59 @@ function boardText() {
   const rows = sortFleet(fleet).map((hb) => {
     const [state] = stateCell(hb)
     const [cache] = cacheCell(hb)
-    return `${pad(state, 11)} ${pad(clip(mask(hb.label), 40), 41)} ${pad(tokens(hb.ctx), 6)} ${pad(cache, 13)} ${money(hb.costUsd)}${hb.agentsRunning ? '  ' + hb.agentsRunning + ' agents' : ''}${hb.self ? '  (this one)' : ''}`
+    // ⏳ takes two cells in a terminal: one space less keeps the columns straight
+    return `${pad(state, state.startsWith('⏳') ? 10 : 11)} ${pad(clip(mask(hb.label), 40), 41)} ${pad(tokens(hb.ctx), 6)} ${pad(cache, 13)} ${money(hb.costUsd)}${hb.agentsRunning ? '  ' + hb.agentsRunning + ' agents' : ''}${hb.self ? '  (this one)' : ''}`
   })
   return ['Sessions on this machine:', ...rows].join('\n')
 }
 
+// The board's columns for a body this many cells wide. Columns are fixed-width
+// boxes, not padded text, so they line up in the desktop app's proportional
+// font and around wide glyphs. A narrow body drops the agents, cost and
+// context columns, in that order; below that each session takes two lines.
+const BOARD_COLS = [
+  ['state', 'STATE', 12],
+  ['ctx', 'CONTEXT', 10],
+  ['cache', 'CACHE', 15],
+  ['cost', 'COST', 8],
+  ['agents', 'AGENTS', 8],
+]
+const BUTTON_CELLS = 12 // "1: keep warm"
+
+function boardLayout(width) {
+  const cols = [...BOARD_COLS]
+  const label = () => width - BUTTON_CELLS - cols.reduce((a, c) => a + c[2], 0)
+  for (const drop of ['agents', 'cost', 'ctx']) {
+    if (label() >= 16) break
+    cols.splice(cols.findIndex((c) => c[0] === drop), 1)
+  }
+  const labelWidth = Math.min(45, label())
+  return { cols, labelWidth, twoLine: labelWidth < 12 }
+}
+
 function drawBoard($, e) {
   const { Box, Text, Button } = $.ui.resolve(e)
-  const width = Math.max(60, (e.props && e.props.bodyColumns) || 100)
-  const labelWidth = Math.max(16, Math.min(44, width - 62))
+  const width = (e.props && e.props.bodyColumns) || 100
+  const { cols, labelWidth, twoLine } = boardLayout(width)
   const list = sortFleet(fleet)
-  const header = Text({ dimColor: true, children: [`${pad('STATE', 11)} ${pad('SESSION', labelWidth + 1)} ${pad('CONTEXT', 8)} ${pad('CACHE', 14)} ${pad('COST', 7)} AGENTS`] })
+  const cell = (w, text, props = {}) => Box({ width: w, flexShrink: 0, children: [Text({ ...props, wrap: 'truncate-end', children: [text] })] })
+  const header = twoLine
+    ? Text({ dimColor: true, children: ['SESSIONS'] })
+    : Box({ flexDirection: 'row', children: [cell(cols[0][2], 'STATE', { dimColor: true }), cell(labelWidth, 'SESSION', { dimColor: true }), ...cols.slice(1).map((c) => cell(c[2], c[1], { dimColor: true }))] })
   const rows = list.map((hb, i) => {
     const [state, stateColor] = stateCell(hb)
     const [cache, cacheColor] = cacheCell(hb)
-    const label = clip(mask(hb.label || hb.id), labelWidth) + (hb.self ? ' ◂' : '')
+    const label = mask(hb.label || hb.id) + (hb.self ? ' ◂' : '')
     const ctx = tokens(hb.ctx) + (hb.window ? ' ' + Math.round((100 * (hb.ctx || 0)) / hb.window) + '%' : '')
-    const cells = [
-      Text(tone(stateColor, { children: [pad(state, 11) + ' '] })),
-      Text({ bold: !!hb.self, children: [pad(label, labelWidth + 1) + ' '] }),
-      Text({ children: [pad(ctx, 8) + ' '] }),
-      Text(tone(cacheColor, { children: [pad(cache, 14) + ' '] })),
-      Text({ children: [pad(money(hb.costUsd), 7) + ' '] }),
-      Text({ dimColor: !hb.agentsRunning, children: [String(hb.agentsRunning || 0) + '  '] }),
-    ]
+    const value = {
+      ctx: [ctx, {}],
+      cache: [cache, tone(cacheColor)],
+      cost: [money(hb.costUsd), {}],
+      agents: [String(hb.agentsRunning || 0), { dimColor: !hb.agentsRunning }],
+    }
     const big = (hb.ctx || 0) >= settings.bigTokens
-    if (big && !hb.stale && i < 9) {
-      cells.push(
-        Button({
+    const button = big && !hb.stale && i < 9
+      ? Button({
           key: 'kw-' + hb.id,
           label: hb.keepWarm ? 'stop warm' : 'keep warm',
           hotkey: String(i + 1),
@@ -859,17 +902,31 @@ function drawBoard($, e) {
             await readFleet($)
             $.ui.invalidate('ui.render')
           },
-        }),
-      )
+        })
+      : null
+    const lines = []
+    if (twoLine) {
+      // State, name and button on the first line; the figures under the name
+      const name = Box({ flexGrow: 1, flexShrink: 1, children: [Text({ bold: !!hb.self, wrap: 'truncate-end', children: [label] })] })
+      lines.push(Box({ flexDirection: 'row', columnGap: 1, children: button ? [cell(cols[0][2] - 1, state, tone(stateColor)), name, button] : [cell(cols[0][2] - 1, state, tone(stateColor)), name] }))
+      lines.push(Box({ flexDirection: 'row', paddingLeft: cols[0][2], children: [
+        Text({ children: [`${ctx} · `] }),
+        Text(tone(cacheColor, { children: [cache] })),
+        Text({ wrap: 'truncate-end', children: [` · ${money(hb.costUsd)}`] }),
+      ] }))
+    } else {
+      const cells = [cell(cols[0][2], state, tone(stateColor)), cell(labelWidth, label, { bold: !!hb.self })]
+      for (const c of cols.slice(1)) cells.push(cell(c[2], value[c[0]][0], value[c[0]][1]))
+      if (button) cells.push(button)
+      lines.push(Box({ flexDirection: 'row', children: cells }))
     }
-    const line = Box({ flexDirection: 'row', children: cells })
     const detail = []
     if (hb.state === 'waiting' && hb.waitingFor) detail.push(`needs you: ${hb.waitingFor}`)
     else if (hb.state === 'working' && hb.tool) detail.push(`running ${hb.tool}`)
     if (hb.coldCount) detail.push(`${hb.coldCount} cold restart${hb.coldCount === 1 ? '' : 's'} ${money(hb.coldUsd)}`)
     if (hb.keepWarm) detail.push(`warm until ${clock(hb.keepWarmUntil)}, ${hb.pings} ping(s) ${money(hb.pingUsd)}`)
-    if (detail.length === 0) return line
-    return Box({ flexDirection: 'column', children: [line, Text({ dimColor: true, children: ['            └ ' + detail.join(' · ')] })] })
+    if (detail.length) lines.push(Box({ paddingLeft: cols[0][2], children: [Text({ dimColor: true, children: ['└ ' + detail.join(' · ')] })] }))
+    return lines.length === 1 ? lines[0] : Box({ flexDirection: 'column', children: lines })
   })
   const totalCost = list.reduce((a, hb) => a + (hb.costUsd || 0), 0)
   const totalCold = list.reduce((a, hb) => a + (hb.coldUsd || 0), 0)

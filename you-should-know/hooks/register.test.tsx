@@ -109,8 +109,8 @@ describe('/you-should-know', () => {
     expect(await know($, 'tests')).toMatch(/Checking what you should know about tests/)
     await settle()
     expect(w.forks[0]).toContain('Focus on: tests.')
-    expect(w.logs[0]).toContain('1. Risk     Only test is skipped — OK is not a pass')
-    expect(w.logs[0]).toContain('2. Changed  pricing.py changed')
+    // One transcript notice per line: a notice can't hold a newline
+    expect(w.logs).toEqual(['You should know · tests (2)', '1. Risk     Only test is skipped — OK is not a pass', '2. Changed  pricing.py changed'])
     const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
     expect(await ui.find({ type: 'Text', text: /tests · 2 points/ })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: /^Risk/ })).toBeDefined()
@@ -132,6 +132,19 @@ describe('/you-should-know', () => {
     const after = await $.ui.mount({ ...BAND, surface: 'desktop' })
     expect(await after.find({ type: 'Text', text: /You should know/ })).toBeUndefined()
     await after.unmount()
+    await ui.unmount()
+  })
+
+  test('a long focus is clipped so the header stays one line', async ($, on) => {
+    world(on, { isAnswered: true, text: '- Risk | one thing |' })
+    await $.session.start({ cwd: '/work', surface: 'terminal', isInteractive: true })
+    const focus = 'the narrow board layout and desktop fonts and everything else besides'
+    await know($, focus)
+    await settle()
+    const ui = await $.ui.mount({ ...BAND, surface: 'terminal', props: { ...BAND.props, bodyColumns: 60 } })
+    const head = await ui.find({ type: 'Text', text: /1 point$/ })
+    expect(head).toBeDefined()
+    expect(JSON.stringify(head)).toContain('…')
     await ui.unmount()
   })
 

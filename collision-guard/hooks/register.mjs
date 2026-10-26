@@ -66,6 +66,7 @@ async function readOthers($) {
     try {
       const v = JSON.parse(await $.fs.read(`${dir}/${entry.name}`))
       if (!v || v.ended || now - (v.updatedAt || 0) > settings.liveMin * MIN) continue
+      v.title = titleOf(v.title) // a ledger written before titles were cleaned
       out.push(v)
     } catch {
       // half-written or gone: skip it this time
@@ -98,6 +99,14 @@ function collisionFor(key, others) {
     if (!best || f.at > best.at) best = { other: o, at: f.at }
   }
   return best
+}
+
+// A chat's name from its first prompt. The desktop app opens a prompt with
+// <system-reminder> blocks; those are dropped, and a prompt that is only markup
+// gives no name, so the chat goes by its folder instead.
+export function titleOf(text) {
+  const body = String(text || '').replace(/<([a-z][\w-]*)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ').trim()
+  return body.startsWith('<') ? '' : clip(body, 80)
 }
 
 function agoText(ms) {
@@ -203,7 +212,7 @@ export function register(on) {
 
   // The first prompt names this chat in other chats' questions
   on('prompt.submit', async ($, e, next) => {
-    if (!S.title && e.origin && ['composer', 'bridge', 'sdk'].includes(e.origin.kind) && e.text) S.title = clip(e.text, 80)
+    if (!S.title && e.origin && ['composer', 'bridge', 'sdk'].includes(e.origin.kind) && e.text) S.title = titleOf(e.text)
     return next(e)
   })
 

@@ -91,7 +91,9 @@ def notify(title, text):
 
 
 def main():
-    lines, updates, problems = [], [], []
+    # The report: each upstream repo's HEAD, then one line per mod in name
+    # order (local and built-in mods too), then any problems.
+    repo_lines, lines, builtin_lines, updates, problems = [], [], [], [], []
 
     for d in mod_folders():
         if d not in TRACKED:
@@ -102,7 +104,7 @@ def main():
     enabled = enabled_plugins()
     for mod, plugin_id in BUILTIN.items():
         if enabled.get(plugin_id) is True:
-            lines.append(f"  ok      {mod}: built in, enabled")
+            builtin_lines.append(f"  ok      {mod}: built in, enabled")
         else:
             problems.append(f"{mod}: built-in mod is not enabled; run `claude plugin enable {plugin_id}`")
 
@@ -116,12 +118,17 @@ def main():
                 cmp = gh_api(f"repos/{repo}/compare/{base}...{head['sha']}")
                 changed[base] = [f["filename"] for f in cmp.get("files", [])]
             repo_state[repo] = (head["sha"], head["commit"]["committer"]["date"][:10], changed)
-            lines.append(f"{repo}: HEAD {head['sha'][:12]} ({repo_state[repo][1]})")
+            repo_lines.append(f"  {repo}: HEAD {head['sha'][:12]} ({repo_state[repo][1]})")
         except (FetchError, KeyError, ValueError) as e:
             problems.append(f"{repo}: could not reach GitHub ({e})")
 
-    for mod, t in TRACKED.items():
-        if t["repo"] == "local" or t["repo"] not in repo_state or not os.path.isdir(os.path.join(ROOT, mod)):
+    for mod, t in sorted(TRACKED.items()):
+        if not os.path.isdir(os.path.join(ROOT, mod)):
+            continue
+        if t["repo"] == "local":
+            lines.append(f"  local   {mod}: {local_version(mod)}")
+            continue
+        if t["repo"] not in repo_state:
             continue
         sha, _, changed = repo_state[t["repo"]]
         files = [f for f in changed[t["synced"]] if f.startswith(t["path"] + "/")]
@@ -136,8 +143,8 @@ def main():
         else:
             lines.append(f"  ok      {mod}: {lo}")
 
-    lines += [f"  PROBLEM {p}" for p in problems]
-    report = f"[{datetime.now():%Y-%m-%d %H:%M}] my-mods update check\n" + "\n".join(lines)
+    lines += builtin_lines + [f"  PROBLEM {p}" for p in problems]
+    report = "\n".join([f"[{datetime.now():%Y-%m-%d %H:%M}] my-mods update check", "Upstream:", *repo_lines, "Mods:", *lines])
     print(report)
     os.makedirs(os.path.dirname(LOG), exist_ok=True)
     with open(LOG, "a") as f:
